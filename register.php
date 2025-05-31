@@ -1,29 +1,39 @@
 <?php
-require_once "user.php";
+require_once('user.php');
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-  $username = $_POST['username'];
-  $password = $_POST['password'];
+$message = '';
 
-  // Password strength check
-  if (strlen($password) < 8) {
-    die("Password must be at least 8 characters.");
-  }
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $username = $_POST["username"];
+    $password = $_POST["password"];
 
-  $user = new User();
+    $user = new User();
 
-  if ($user->user_exists($username)) {
-    die("Username already taken.");
-  }
-
-  $hashed = password_hash($password, PASSWORD_DEFAULT);
-  $user->create_user($username, $hashed);
-  echo "Account created successfully.";
+    if ($user->user_exists($username)) {
+        $message = "Username already exists!";
+    } else {
+        $result = $user->create_user($username, $password);
+        $message = $result ? "Account created successfully!" : "Error creating account.";
+    }
 }
 ?>
 
-<form method="post">
-  Username: <input name="username" required><br>
-  Password: <input name="password" type="password" required><br>
-  <button type="submit">Register</button>
-</form>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Register</title>
+</head>
+<body>
+    <h2>Register</h2>
+    <form method="POST">
+        Username: <input type="text" name="username" required><br><br>
+        Password: <input type="password" name="password" required><br><br>
+        <button type="submit">Register</button>
+    </form>
+
+    <p><?php echo $message; ?></p>
+
+    <p><a href="index.php">Back to Home</a></p>
+</body>
+</html>
+

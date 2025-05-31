@@ -2,6 +2,8 @@
 require_once('database.php');
 
 class User {
+
+    // Fetch all users (for testing or admin use)
     public function get_all_users() {
         $db = db_connect();
         $statement = $db->prepare("SELECT * FROM users;");
@@ -10,31 +12,38 @@ class User {
         return $rows;
     }
 
+    // Create a new user with hashed password
     public function create_user($username, $password) {
         $db = db_connect();
-        // Check if user exists
-        $check = $db->prepare("SELECT * FROM users WHERE username = ?");
-        $check->execute([$username]);
-        if ($check->fetch()) return false; // user exists
 
+        // Hash the password securely before saving
         $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-        $statement = $db->prepare("INSERT INTO users (username, password) VALUES (?, ?)");
-        return $statement->execute([$username, $hashed_password]);
+
+        $statement = $db->prepare("INSERT INTO users (username, password) VALUES (:username, :password)");
+        $statement->bindValue(':username', $username);
+        $statement->bindValue(':password', $hashed_password);
+
+        return $statement->execute();
     }
 
+    // Verify user credentials at login
     public function verify_user($username, $password) {
         $db = db_connect();
-        $statement = $db->prepare("SELECT password FROM users WHERE username = ?");
-        $statement->execute([$username]);
-        $row = $statement->fetch(PDO::FETCH_ASSOC);
+        $statement = $db->prepare("SELECT password FROM users WHERE username = :username");
+        $statement->bindValue(':username', $username);
+        $statement->execute();
+        $user = $statement->fetch(PDO::FETCH_ASSOC);
 
-        if ($row && password_verify($password, $row['password'])) {
-            return true;
+        if ($user && password_verify($password, $user['password'])) {
+            return true;  // Valid credentials
+        } else {
+            return false; // Invalid username or password
         }
-        return false;
     }
 }
 ?>
+
+
 
 
 
